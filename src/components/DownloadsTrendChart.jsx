@@ -1,0 +1,124 @@
+import { scaleLinear } from 'd3-scale';
+import { extent, max } from 'd3-array';
+import { area, line, curveMonotoneX } from 'd3-shape';
+import ChartCard from './ChartCard.jsx';
+
+const chartDimensions = {
+  width: 640,
+  height: 360,
+  margin: { top: 24, right: 24, bottom: 42, left: 60 },
+};
+
+const DownloadsTrendChart = ({ data, insight }) => {
+  const { width, height, margin } = chartDimensions;
+  const xScale = scaleLinear()
+    .domain(extent(data, (d) => d.episode))
+    .range([margin.left, width - margin.right]);
+
+  const yMax = max(data, (d) => d.downloads) * 1.05;
+  const yScale = scaleLinear().domain([0, yMax]).range([height - margin.bottom, margin.top]);
+
+  const downloadsLine = line()
+    .x((d) => xScale(d.episode))
+    .y((d) => yScale(d.downloads))
+    .curve(curveMonotoneX);
+
+  const rollingLine = line()
+    .x((d) => xScale(d.episode))
+    .y((d) => yScale(d.downloadsRolling))
+    .curve(curveMonotoneX);
+
+  const downloadsArea = area()
+    .x((d) => xScale(d.episode))
+    .y0(yScale(0))
+    .y1((d) => yScale(d.downloads))
+    .curve(curveMonotoneX);
+
+  const xTicks = xScale.ticks(6);
+  const yTicks = yScale.ticks(5);
+  const latest = data[data.length - 1];
+
+  return (
+    <ChartCard
+      title="Downloads Momentum"
+      description="Episode downloads continue to climb; the rolling average smooths the growth trend and highlights seasonal dips you can prep for."
+      insight={insight}
+      legend={
+        <div className="legend">
+          <span className="legend-item">
+            <span className="legend-swatch" style={{ background: 'rgba(56, 189, 248, 0.45)' }} /> Episode downloads
+          </span>
+          <span className="legend-item">
+            <span className="legend-swatch" style={{ background: 'rgba(129, 140, 248, 0.75)' }} /> 7-episode moving average
+          </span>
+        </div>
+      }
+    >
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Downloads per episode with moving average">
+        <defs>
+          <linearGradient id="downloadsFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="rgba(56, 189, 248, 0.45)" />
+            <stop offset="100%" stopColor="rgba(56, 189, 248, 0.05)" />
+          </linearGradient>
+        </defs>
+        {yTicks.map((tick) => (
+          <line
+            key={`y-${tick}`}
+            className="grid-line"
+            x1={margin.left}
+            x2={width - margin.right}
+            y1={yScale(tick)}
+            y2={yScale(tick)}
+          />
+        ))}
+        <path d={downloadsArea(data)} fill="url(#downloadsFill)" opacity={0.9} />
+        <path d={downloadsLine(data)} className="line-primary" />
+        <path d={rollingLine(data)} className="line-secondary" />
+        <circle
+          className="dot-highlight"
+          cx={xScale(latest.episode)}
+          cy={yScale(latest.downloads)}
+          r={5}
+        />
+        <text
+          x={xScale(latest.episode)}
+          y={yScale(latest.downloads) - 14}
+          textAnchor="end"
+          className="axis-label"
+        >
+          {latest.downloads.toLocaleString()} downloads
+        </text>
+        {xTicks.map((tick) => (
+          <g key={`x-${tick}`}>
+            <line
+              className="grid-line"
+              x1={xScale(tick)}
+              x2={xScale(tick)}
+              y1={height - margin.bottom}
+              y2={margin.top}
+              strokeDasharray="2 6"
+            />
+            <text
+              x={xScale(tick)}
+              y={height - margin.bottom + 28}
+              textAnchor="middle"
+              className="axis-label"
+            >
+              Ep {tick}
+            </text>
+          </g>
+        ))}
+        <text
+          x={margin.left}
+          y={margin.top - 10}
+          className="axis-label"
+          textAnchor="start"
+        >
+          Downloads per episode
+        </text>
+      </svg>
+    </ChartCard>
+  );
+};
+
+export default DownloadsTrendChart;
