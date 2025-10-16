@@ -29,14 +29,6 @@ const App = () => {
     <div className="app">
       <header>
         <h1>Podcast Growth Intelligence</h1>
-        <p>
-          A React + D3 command center for your episodes, built to surface the levers that amplify reach,
-          keep listeners to the final minute, and grow subscribers with intention.
-        </p>
-        <p>
-          Explore six complementary views to uncover where to tighten edits, intensify marketing, and set
-          sharper targets for the next content sprint.
-        </p>
         <div className="summary-strip" aria-label="Key podcast metrics">
           <div className="summary-item">
             <strong>Total Episodes</strong>
