@@ -1,6 +1,7 @@
 import { scaleLinear } from 'd3-scale';
 import { extent, max } from 'd3-array';
 import ChartCard from './ChartCard.jsx';
+import { useZoomPan } from '../hooks/useZoomPan.js';
 
 const chartDimensions = {
   width: 640,
@@ -36,13 +37,26 @@ const SharesSubscribersScatter = ({ data, insight }) => {
   const xDomain = extent(points, (p) => p.x);
   const yDomain = [0, max(points, (p) => p.y) * 1.1];
 
-  const xScale = scaleLinear().domain(xDomain).range([margin.left, width - margin.right]);
-  const yScale = scaleLinear().domain(yDomain).range([height - margin.bottom, margin.top]);
+  const { xDomain: zoomedXDomain, yDomain: zoomedYDomain, zoomRef, resetZoom, xRange, yRange } = useZoomPan({
+    width,
+    height,
+    margin,
+    xDomain,
+    yDomain,
+    maxZoom: 12,
+  });
+
+  const xScale = scaleLinear()
+    .domain(zoomedXDomain)
+    .range(xRange ?? [margin.left, width - margin.right]);
+  const yScale = scaleLinear()
+    .domain(zoomedYDomain)
+    .range(yRange ?? [height - margin.bottom, margin.top]);
 
   const regression = calculateRegression(points);
   const regressionLine = [
-    { x: xDomain[0], y: regression.slope * xDomain[0] + regression.intercept },
-    { x: xDomain[1], y: regression.slope * xDomain[1] + regression.intercept },
+    { x: zoomedXDomain[0], y: regression.slope * zoomedXDomain[0] + regression.intercept },
+    { x: zoomedXDomain[1], y: regression.slope * zoomedXDomain[1] + regression.intercept },
   ];
 
   const topShare = points.reduce((maxPoint, point) =>
@@ -70,7 +84,7 @@ const SharesSubscribersScatter = ({ data, insight }) => {
     >
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Scatter plot of social shares vs subscribers">
         {yTicks.map((tick) => (
-          <g key={`y-${tick}`}>
+          <g key={`y-${tick.toFixed(3)}`}>
             <line
               className="grid-line"
               x1={margin.left}
@@ -84,7 +98,7 @@ const SharesSubscribersScatter = ({ data, insight }) => {
               textAnchor="end"
               className="axis-label"
             >
-              {Math.round(tick).toLocaleString()}
+              {tick.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </text>
           </g>
         ))}
@@ -114,13 +128,13 @@ ${point.x} shares → ${point.y} subscribers`}
         })}
         {xTicks.map((tick) => (
           <text
-            key={`x-${tick}`}
+            key={`x-${tick.toFixed(3)}`}
             x={xScale(tick)}
             y={height - margin.bottom + 30}
             textAnchor="middle"
             className="axis-label"
           >
-            {tick.toLocaleString()}
+            {tick.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </text>
         ))}
         <text
@@ -138,6 +152,19 @@ ${point.x} shares → ${point.y} subscribers`}
         >
           Subscribers gained
         </text>
+        <rect
+          ref={zoomRef}
+          x={margin.left}
+          y={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.top - margin.bottom}
+          fill="transparent"
+          className="interaction-layer"
+          onDoubleClick={resetZoom}
+          aria-hidden="true"
+        >
+          <title>Drag to pan, scroll to zoom, double-click to reset</title>
+        </rect>
       </svg>
     </ChartCard>
   );

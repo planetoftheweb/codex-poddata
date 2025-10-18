@@ -182,3 +182,12 @@ header p {
   height: 0.75rem;
   border-radius: 0.2rem;
 }
+
+.interaction-layer {
+  cursor: grab;
+  touch-action: none;
+}
+
+.interaction-layer:active {
+  cursor: grabbing;
+}

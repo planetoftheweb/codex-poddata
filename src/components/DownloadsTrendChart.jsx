@@ -2,6 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import { extent, max } from 'd3-array';
 import { area, line, curveMonotoneX } from 'd3-shape';
 import ChartCard from './ChartCard.jsx';
+import { useZoomPan } from '../hooks/useZoomPan.js';
 
 const chartDimensions = {
   width: 640,
@@ -11,9 +12,19 @@ const chartDimensions = {
 
 const DownloadsTrendChart = ({ data, insight }) => {
   const { width, height, margin } = chartDimensions;
+  const baseXDomain = extent(data, (d) => d.episode);
+
+  const { xDomain, zoomRef, resetZoom, xRange } = useZoomPan({
+    width,
+    height,
+    margin,
+    xDomain: baseXDomain,
+    maxZoom: 12,
+  });
+
   const xScale = scaleLinear()
-    .domain(extent(data, (d) => d.episode))
-    .range([margin.left, width - margin.right]);
+    .domain(xDomain)
+    .range(xRange ?? [margin.left, width - margin.right]);
 
   const yMax = max(data, (d) => d.downloads) * 1.05;
   const yScale = scaleLinear().domain([0, yMax]).range([height - margin.bottom, margin.top]);
@@ -89,7 +100,7 @@ const DownloadsTrendChart = ({ data, insight }) => {
           {latest.downloads.toLocaleString()} downloads
         </text>
         {xTicks.map((tick) => (
-          <g key={`x-${tick}`}>
+          <g key={`x-${tick.toFixed(3)}`}>
             <line
               className="grid-line"
               x1={xScale(tick)}
@@ -104,7 +115,7 @@ const DownloadsTrendChart = ({ data, insight }) => {
               textAnchor="middle"
               className="axis-label"
             >
-              Ep {tick}
+              Ep {Math.round(tick)}
             </text>
           </g>
         ))}
@@ -116,6 +127,19 @@ const DownloadsTrendChart = ({ data, insight }) => {
         >
           Downloads per episode
         </text>
+        <rect
+          ref={zoomRef}
+          x={margin.left}
+          y={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.top - margin.bottom}
+          fill="transparent"
+          className="interaction-layer"
+          onDoubleClick={resetZoom}
+          aria-hidden="true"
+        >
+          <title>Drag to pan, scroll to zoom, double-click to reset</title>
+        </rect>
       </svg>
     </ChartCard>
   );

@@ -2,6 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import { extent, max, min } from 'd3-array';
 import { line, curveMonotoneX } from 'd3-shape';
 import ChartCard from './ChartCard.jsx';
+import { useZoomPan } from '../hooks/useZoomPan.js';
 
 const chartDimensions = {
   width: 640,
@@ -11,9 +12,19 @@ const chartDimensions = {
 
 const CompletionRateChart = ({ data, averageCompletionRate, insight }) => {
   const { width, height, margin } = chartDimensions;
+  const baseXDomain = extent(data, (d) => d.episode);
+
+  const { xDomain, zoomRef, resetZoom, xRange } = useZoomPan({
+    width,
+    height,
+    margin,
+    xDomain: baseXDomain,
+    maxZoom: 12,
+  });
+
   const xScale = scaleLinear()
-    .domain(extent(data, (d) => d.episode))
-    .range([margin.left, width - margin.right]);
+    .domain(xDomain)
+    .range(xRange ?? [margin.left, width - margin.right]);
 
   const minRate = min(data, (d) => d.completionRate);
   const maxRate = max(data, (d) => d.completionRate);
@@ -86,13 +97,13 @@ const CompletionRateChart = ({ data, averageCompletionRate, insight }) => {
         ))}
         {xTicks.map((tick) => (
           <text
-            key={`x-${tick}`}
+            key={`x-${tick.toFixed(3)}`}
             x={xScale(tick)}
             y={height - margin.bottom + 28}
             textAnchor="middle"
             className="axis-label"
           >
-            Ep {tick}
+            Ep {Math.round(tick)}
           </text>
         ))}
         <text
@@ -114,6 +125,19 @@ const CompletionRateChart = ({ data, averageCompletionRate, insight }) => {
             {(tick * 100).toFixed(0)}%
           </text>
         ))}
+        <rect
+          ref={zoomRef}
+          x={margin.left}
+          y={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.top - margin.bottom}
+          fill="transparent"
+          className="interaction-layer"
+          onDoubleClick={resetZoom}
+          aria-hidden="true"
+        >
+          <title>Drag to pan, scroll to zoom, double-click to reset</title>
+        </rect>
       </svg>
     </ChartCard>
   );
