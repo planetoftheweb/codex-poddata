@@ -119,6 +119,45 @@ header p {
   height: auto;
 }
 
+.chart-svg-wrapper {
+  position: relative;
+}
+
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, -115%);
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 255, 0.35);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.45);
+  border-radius: 0.6rem;
+  padding: 0.65rem 0.75rem;
+  color: #f8fafc;
+  pointer-events: none;
+  min-width: 150px;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.chart-tooltip-heading {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(251, 191, 36, 0.95);
+}
+
+.chart-tooltip-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.chart-tooltip-metric strong {
+  font-size: 0.85rem;
+  color: #f8fafc;
+}
+
 .axis-label {
   fill: rgba(148, 163, 184, 0.9);
   font-size: 0.7rem;
