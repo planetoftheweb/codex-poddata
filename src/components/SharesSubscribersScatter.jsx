@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { scaleLinear } from 'd3-scale';
 import { extent, max } from 'd3-array';
 import ChartCard from './ChartCard.jsx';
@@ -26,6 +27,8 @@ const calculateRegression = (points) => {
 
 const SharesSubscribersScatter = ({ data, insight }) => {
   const { width, height, margin } = chartDimensions;
+
+  const [hoveredPoint, setHoveredPoint] = useState(null);
 
   const points = data.map((d) => ({
     x: d.socialMediaShares,
@@ -65,6 +68,55 @@ const SharesSubscribersScatter = ({ data, insight }) => {
 
   const xTicks = xScale.ticks(5);
   const yTicks = yScale.ticks(5);
+
+  const tooltip = (() => {
+    if (!hoveredPoint) {
+      return null;
+    }
+
+    const pointX = xScale(hoveredPoint.x);
+    const pointY = yScale(hoveredPoint.y);
+    const lines = [
+      `Episode ${hoveredPoint.episode}`,
+      hoveredPoint.title,
+      `${hoveredPoint.x.toLocaleString()} shares → ${hoveredPoint.y.toLocaleString()} subs`,
+    ];
+
+    const padding = 12;
+    const lineHeight = 18;
+    const textOffsetX = 12;
+    const textOffsetY = 20;
+    const estimatedWidth = Math.max(...lines.map((line) => line.length * 6.2), 160);
+    const tooltipWidth = Math.min(estimatedWidth, width - margin.left - margin.right);
+    const tooltipHeight = lines.length * lineHeight + padding;
+
+    let tooltipX = pointX + 12;
+    let tooltipY = pointY - tooltipHeight - 12;
+
+    if (tooltipX + tooltipWidth > width - margin.right) {
+      tooltipX = pointX - tooltipWidth - 12;
+    }
+
+    if (tooltipY < margin.top) {
+      tooltipY = pointY + 12;
+    }
+
+    tooltipX = Math.max(margin.left, tooltipX);
+    tooltipY = Math.max(margin.top - 4, tooltipY);
+
+    return (
+      <g className="chart-tooltip" transform={`translate(${tooltipX}, ${tooltipY})`} pointerEvents="none">
+        <rect className="chart-tooltip__bg" width={tooltipWidth} height={tooltipHeight} rx={8} ry={8} />
+        <text className="chart-tooltip__text" x={textOffsetX} y={textOffsetY}>
+          {lines.map((line, index) => (
+            <tspan key={`${line}-${index}`} x={textOffsetX} dy={index === 0 ? 0 : lineHeight}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    );
+  })();
 
   return (
     <ChartCard
@@ -118,14 +170,16 @@ const SharesSubscribersScatter = ({ data, insight }) => {
               cy={yScale(point.y)}
               r={isHighlight ? 6 : 4}
               className={isHighlight ? 'dot-highlight' : 'dot'}
-            >
-              <title>
-                {`Ep ${point.episode}: ${point.title}
-${point.x} shares → ${point.y} subscribers`}
-              </title>
-            </circle>
+              tabIndex={0}
+              onMouseEnter={() => setHoveredPoint(point)}
+              onMouseLeave={() => setHoveredPoint(null)}
+              onFocus={() => setHoveredPoint(point)}
+              onBlur={() => setHoveredPoint(null)}
+              aria-label={`Episode ${point.episode}, ${point.title}, ${point.x.toLocaleString()} shares leading to ${point.y.toLocaleString()} subscribers`}
+            />
           );
         })}
+        {tooltip}
         {xTicks.map((tick) => (
           <text
             key={`x-${tick.toFixed(3)}`}

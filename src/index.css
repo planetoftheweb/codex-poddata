@@ -191,3 +191,16 @@ header p {
 .interaction-layer:active {
   cursor: grabbing;
 }
+
+.chart-tooltip__bg {
+  fill: rgba(15, 23, 42, 0.92);
+  stroke: rgba(148, 163, 255, 0.45);
+  stroke-width: 1;
+  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.45));
+}
+
+.chart-tooltip__text {
+  fill: #f8fafc;
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+}
